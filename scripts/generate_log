@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+APACHE_LOG_URL='https://raw.githubusercontent.com/elastic/examples/master/Common%20Data%20Formats/apache_logs/apache_logs'
+APACHE_LOG='/tmp/apache.log'
+NCSA_LOG='/tmp/ncsa.log'
+ACCESS_LOG='/tmp/access.log'
+
+
+if [ ! -f "${NCSA_LOG}" ]
+then
+	echo "File '${NCSA_LOG}' not found"
+
+	echo "Downloading log from '${APACHE_LOG_URL}'"
+	wget -q "${APACHE_LOG_URL}" -O "${APACHE_LOG}"
+
+	echo "Converting log to (NCSA) Common Log Format"
+	cut -d' ' -f1-10 "${APACHE_LOG}" > "${NCSA_LOG}"
+fi
+
+echo "Generating log: ${ACCESS_LOG}"
+rm -f "${ACCESS_LOG}"; cat "${NCSA_LOG}" | pv -q -L 1150 >> "${ACCESS_LOG}"
